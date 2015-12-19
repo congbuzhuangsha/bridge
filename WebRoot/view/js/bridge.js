@@ -38,7 +38,7 @@
  * 		
  * 		1.4.3.本地无法发送post请求,只能发送远程请求的方法
  * 			bg.post().
- *
+ *		1.5.bg.getHttpUrl(cross,url) 返回请求路径
  * bg.inti配置介绍:
  * 		root:"",//根目录,前后端的项目名称(根目录)最好相同,整合的时候比较容易
  *		view:"",//视图.前端的所有编码都放在一个目录下,这个目录就是视图
@@ -173,7 +173,14 @@
 		}
 		return u+url;
 	}
-	
+	 /**
+     * 获取请求路径
+     * @param  cross
+     * @param  url
+     */
+    Bridge.prototype.getHttpUrl=function(cross,url){
+    	return getAjaxUrl(getAjaxHttpType(cross),url);
+    }
 	/**
 	 * 若要发送远程跨域请求,
 	 * 需要添加参数data.cross=true;
