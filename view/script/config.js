@@ -12,6 +12,6 @@ bg.init({
     	
     },
     script:{
-    	""
+    	"script/1.html":["2.js"]
     }
 });
