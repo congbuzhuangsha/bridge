@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script type="text/javascript" src="../js/jquery-2.1.4.min.js" ></script>
+		<script type="text/javascript">
+			var xhr;
+			var states=["正在初始化...","正在初始化请求...","正在发送数据...","正在接受数据...","完成请求..."];
+			function callback(){
+				$("ol").append("<li>"+states[xhr.readyState]+"</li>");
+				$("li:last").append("完成");
+				if(xhr.readyState==4&&xhr.status==200){
+					var sHeaders=xhr.getAllResponseHeaders();
+					var sResponse=xhr.responseText;
+					$("p:first").prepend("<b>响应标头:</b><br />"+sHeaders);
+					$("p:last").html("服务器响应文本:"+sResponse);
+				}
+			}
+			$(function(){
+				$("button").click(function(){
+					xhr=new XMLHttpRequest();
+					$("ol").append("<li>"+states[xhr.readyState]+"</li>");
+					xhr.open("GET","text.html",true);
+					xhr.onreadystatechange=callback;
+					xhr.send(null);
+				});
+			});
+			
+		</script>
+	</head>
+	<body>
+		<button>发送请求</button>
+		<ol></ol>
+		<p></p>
+		<p></p>
+	</body>
+</html>

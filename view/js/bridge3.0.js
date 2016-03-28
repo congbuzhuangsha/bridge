@@ -1,27 +1,4 @@
 (function(){
-	function appendScript(src){
-	    	var script=document.createElement("script");
-	    	script.src=src;
-	    	//script.onload="appendScript('"+src+"')";
-			script.type="text/javascript";
-			document.body.appendChild(script);
-	    }
-	
-	
-	
-	
-	//追加script标签
-	(function(){
-		//var objScript=document.getElementById("bridge");
-		//var configUrl=objScript.attributes.config//.split("=");
-		//if(configUrl){
-			appendScript("config.js");
-		//}
-	})();
-	
-	
-	
-	
 	var config={
     	/*
     	 * 返回true,进入ajax程序,否则终止后面的ajax
@@ -52,14 +29,6 @@
        }
        var hostName=window.location.protocol+"//"+window.location.host;
        config.servers["local"]={hostName:hostName,cross:false,root:config.root};
-       for(var i=0;i<config.script.tmlist.length;i++){
-	       	appendScript(config.script.tmlist[i]);	
-       }
-       
-       
-       
-       
-       
     };
 	/**
      * 替换所有指定的字符
@@ -365,16 +334,8 @@
 	
 	
 	window.bg=new Bridge();
-	return;
-	/*
-	 *从jquery基础上封装
-	 * */
-	(function($,bg){
-		if($==null){
-	        throw new Error("bridge出错了:没有找到jQuery或Zepto库.");
-	    }
-		
-		  /**
+	
+	/**
      * 对于传递过来的server参数进行统一格式
      * @param server 可能是字符串也可能是对象
      */
@@ -448,6 +409,110 @@
     	var type=getAjaxHttpType(server,cross);
         return getAjaxUrl(type,url,server);
     }
+    /*
+     * ajax 用法和jquery类似
+     * 
+     * */
+    bg.ajax=function(opts){
+		var defaults={
+			url:"",
+			type:"get",
+			data:null,
+			async:true,
+			cross:false,
+			server:"",
+			timeout:0,
+			dataType:"text",
+			contentType:"application/x-www-form-urlencoded",
+			beforeSend:function(xhr){},
+			dataFilter:function(data,type){
+				//var text=xhr.responseText;
+				if(type=="json"){
+					return JSON.parse(data);
+				}else if(type=="html"||type=="text"){
+					return data;
+				}else if(type=="script"){
+					eval(data);
+					return data;
+				}
+			},
+			success:function(data,textStatus,xhr){},
+			"error":function(xhr,textStatus){},
+			complete:function(xhr,textStatus){}
+		};
+		for(var k in defaults){
+			if(typeof opts[k]!="undefined"){
+				defaults[k]=opts[k];
+			}
+		}
+		opts=defaults;
+		var httpType=getAjaxHttpType(opts.server,true);
+		opts.url=getAjaxUrl(httpType,opts.url,opts.erver);
+
+		var xhr=new XMLHttpRequest();
+		var readyState=xhr.readyState;
+		var status=xhr.status;
+		if(readyState==0){//正在初始化....
+			var abort=opts.beforeSend(xhr);
+			if(typeof abort=="boolean"&&!abort){
+				xhr.abort();
+			}
+		}
+		/*function success(data, textStatus, xhr){
+			console.log(JSON.parse(data));
+		}
+		function error(xhr, textStatus){
+			console.log("请求失败");
+		}*/
+		xhr.onreadystatechange=function(){
+			readyState=xhr.readyState;
+			status=xhr.status;
+			/*if(readyState==1){//正在初始化请求...
+				console.log("正在初始化请求...");
+			}else if(readyState==2){//正在发送请求...
+				console.log("正在发送请求...");
+			}else if(readyState==3){//正在接受数据...
+				console.log("正在接受数据...");
+			}else if(readyState==4){//完成请求...
+				console.log("完成请求...");
+			}*/
+			if(readyState==4){
+				if(status>=200&&status<300||status==304){
+					var data=opts.dataFilter(xhr.responseText,opts.dataType);
+						opts.success(data, xhr.statusText, xhr);	
+				}else{
+					opts.error(xhr,xhr.statusText);
+				}
+				opts.complete(xhr,xhr.textStatus);
+			}
+		};
+		xhr.open(opts.type,opts.url,opts.async);
+		xhr.send(opts.data);
+	};
+	return ;
+	  
+    /*************************
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+	* 以下内容准备作废
+* */
+	
+	
+	/*
+	 *从jquery基础上封装
+	 * */
+	(function($,bg){
+		if($==null){
+	        throw new Error("bridge出错了:没有找到jQuery或Zepto库.");
+	    }
     /**
      * 若要发送远程跨域请求,
      * 需要添加参数data.cross=true;
