@@ -3,104 +3,16 @@
 	<head>
 		<meta charset="UTF-8">
 		<title></title>
-		<script type="text/javascript" src="../js/jquery-2.1.4.min.js" ></script>
+		<script name="myhtml" type="text/javascript" src="../js/jquery-2.1.4.min.js"  config="app" ></script>
 	</head>
 	<body>
 		<button id="tt">发送请求</button>
 		<button id="btn">测试按钮</button>
 	</body>
 	<script type="text/javascript">
-			var bg={};
-			bg.ajax=function(opts){
-				var defaults={
-					url:"",
-					type:"get",
-					data:null,
-					async:true,
-					dataType:"text",
-					contentType:"application/x-www-form-urlencoded",
-					beforeSend:function(xhr){},
-					dataFilter:function(data,type){
-						//var text=xhr.responseText;
-						if(type=="json"){
-							return JSON.parse(data);
-						}else if(type=="html"||type=="text"){
-							return data;
-						}else if(type=="script"){
-							eval(data);
-							return null;
-						}
-					},
-					success:function(data,textStatus,xhr){},
-					"error":function(xhr,textStatus){},
-					complete:function(xhr,textStatus){}
-				};
-				for(var k in defaults){
-					if(typeof opts[k]!="undefined"){
-						defaults[k]=opts[k];
-					}
-				}
-				opts=defaults;
-				var xhr=new XMLHttpRequest();
-				var readyState=xhr.readyState;
-				var status=xhr.status;
-				if(readyState==0){//正在初始化....
-					//console.log("正在初始化...");
-					var abort=opts.beforeSend(xhr);
-					if(typeof abort=="boolean"&&!abort){
-						xhr.abort();
-					}
-				}
-				/*function success(data, textStatus, xhr){
-					console.log(JSON.parse(data));
-				}
-				function error(xhr, textStatus){
-					console.log("请求失败");
-				}*/
-				xhr.onreadystatechange=function(){
-					readyState=xhr.readyState;
-					status=xhr.status;
-					/*if(readyState==1){//正在初始化请求...
-						console.log("正在初始化请求...");
-					}else if(readyState==2){//正在发送请求...
-						console.log("正在发送请求...");
-					}else if(readyState==3){//正在接受数据...
-						console.log("正在接受数据...");
-					}else if(readyState==4){//完成请求...
-						console.log("完成请求...");
-					}*/
-					if(readyState==4){
-						if(status>=200&&status<300||status==304){
-							var data=opts.dataFilter(xhr.responseText,opts.dataType);
-							if(opts.dataType=="script"){
-								
-							}else{
-								opts.success(data, xhr.statusText, xhr);	
-							}
-						}else{
-							opts.error(xhr,xhr.statusText);
-						}
-						opts.complete(xhr,xhr.textStatus);
-					}
-				};
-				xhr.open(opts.type,opts.url,opts.async);
-				xhr.send(opts.data);
-			}
-			
-			$("#tt").click(function(){
-				bg.ajax({
-					url:"1.js",
-					type:"get",
-					dataType:"script",
-					data:null,
-					async:false,
-					success:function(data){
-						console.log(data);
-					}
-				});
-			});
-			
-			
-			
+		var dom=document.createElement("script");
+		dom.type="text/javascript";
+		dom.innerHTML="alert(0);";
+		document.getElementsByTagName("head")[0].appendChild(dom);
 	</script>
 </html>

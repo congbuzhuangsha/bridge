@@ -3,8 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<title></title>
-		<script type="text/javascript" src="js/bridge3.5.js"></script>
-		<script type="text/javascript" src="js/config.js"></script>
+		<!--<script type="text/javascript" src="js/config.js"></script>-->
 		<script type="text/javascript">
 			function app(){
 				bg.ajax({
@@ -39,6 +38,16 @@
 	<body>
 		<button onclick="app()">测试</button>
 		<button onclick="getScript()">获取script</button>
+		<button id="btn1">点我试试</button>
 		<div id="content"></div>
 	</body>
+	<script type="text/javascript" bridgePageName="pageA" bridgeConfig="js/config.js" src="js/bridge3.5.js" ></script>
+	<script type="text/javascript">
+		/*alert($("#btn1").length);
+		$("#btn1").click(function(){
+			alert(123)
+			$("body").css("background-color","red");
+		});*/
+
+	</script>
 </html>

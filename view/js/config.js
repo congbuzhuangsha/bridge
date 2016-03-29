@@ -1,6 +1,10 @@
 bg.init({
 	root:"bridge",//前端项目名称
 	view:"view",//前端视图根目录
+	script:{
+		"pageA":["js/jquery-2.1.4.min.js","test/1.js"],
+		"pageB":["js/jquery-2.1.4.min.js","test/2.js"]
+	},
 	ajaxSetup:{//ajax的全局配置
 		
 	},
@@ -8,12 +12,13 @@ bg.init({
 	 * 返回true,进入ajax程序,否则终止后面的ajax
 	 * */
 	ajaxStart:function(){//调用ajax时,在发起请求前执行,未形成xhr
+		alert(1);
 		return false;
 	},
 	ajaxSend:function(xhr,opts){//ajax发送前,已形成xhr
 		
 	},
-    ajaxSuccess:function(xhr,opts){//请求成功
+    ajaxSuccess:function(xhr,opts){//请求成功,
     	
     },
 	ajaxError:function(xhr,opts,statusText){//请求失败

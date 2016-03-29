@@ -2,9 +2,8 @@
 	var config={
 		root:"",//前端项目名称
 		view:"",//前端视图根目录
-		ajaxSetup:{//ajax的全局配置
-			
-		},
+		script:{},//script配置
+		ajaxSetup:{},//ajax的全局配置
     	/*
     	 * 返回true,进入ajax程序,否则终止后面的ajax
     	 * */
@@ -14,10 +13,10 @@
     	ajaxSend:function(xhr,opts){//ajax发送前,已形成xhr
     		
     	},
-	    ajaxSuccess:function(xhr,opts){//请求成功
+	    ajaxSuccess:function(xhr,opts){//请求成功,在success后执行
 	    	
 	    },
-    	ajaxError:function(xhr,opts,statusText){//请求失败
+    	ajaxError:function(xhr,opts,statusText){//请求失败,在error后执行
     		
     	},
    		ajaxComplete:function(xhr,opts){//请求完成,无论成功和失败
@@ -40,12 +39,25 @@
      * @param opt
      */
     Bridge.prototype.init=function(opt){
-       //$.extend(config, opt);
+    	var obj=this;
        for(var k in opt){
        	config[k]=opt[k];
        }
        var hostName=window.location.protocol+"//"+window.location.host;
        config.servers["local"]={hostName:hostName,cross:false,root:config.root};
+       var scriptArray=config.script[config.pageName];
+       if(scriptArray instanceof Array){
+       		var len=scriptArray.length;
+       		for(var i=0;i<len;i++){
+       			obj.ajax({
+       				url:scriptArray[i],
+       				async:false,
+       				global:false,
+       				dataType:"script",
+       				type:"get"
+       			});
+       		}
+       }
     };
     
     
@@ -60,7 +72,9 @@
     	}else if(type=="string"&&server){
     		server=config.servers[server];
     	}else{
-    		server=config.servers["local"];
+    		/*var hostName=window.location.protocol+"//"+window.location.host;
+    		config.servers["local"]={hostName:hostName,cross:false,root:config.root};*/
+    		server=config.servers["local"]?config.servers["local"]:false;
     	}
     	return server;
     }
@@ -148,7 +162,13 @@
 				}else if(type=="html"||type=="text"){
 					return data;
 				}else if(type=="script"){
-					eval(data);
+					//eval(data);
+					var scriptDom=document.createElement("script");
+					scriptDom.type="text/javascript";
+					//scriptDom.innerHTML=data;
+					scriptDom.src=opts.url;
+					scriptDom.async=false;
+					document.getElementsByTagName("head")[0].appendChild(scriptDom);
 					return data;
 				}
 			},
@@ -165,39 +185,48 @@
 		}
 		//合并请求参数和默认参数
 		for(var k in defaults){
+			//debugger;
+			var value=opts[k];
+			var aaaa=typeof opts[k];
 			if(typeof opts[k]!="undefined"){
-				//如果全局未false,设置的全局事件都不起作用了,用的都是默认配置,省去了后面每次使用全局事件都需要判断global
-				if(opts.global==false&&(k=="ajaxStart"||k=="ajaxSend"||k=="ajaxSuccess"||k=="ajaxError"||k=="ajaxComplete"||k=="ajaxStop")){
-					continue;
-				}
 				defaults[k]=opts[k];
 			}
 		}
 		opts=defaults;
 		opts.server=resolveParamServer(opts.server);
-		var httpType=getAjaxHttpType(opts.server,opts.cross);
-		opts.url=getAjaxUrl(httpType,opts.url,opts.server);
-		var ajaxStart=config.ajaxStart();
-		if(typeof ajaxStart=="boolean"&&ajaxStart==false){
-			config.ajaxStop();
-			return;
+		//一开始加载config.js时,因为配置信息没有加载进来,返回的server(其实是本地的服务名)未undefind;
+		if(opts.server){
+			var httpType=getAjaxHttpType(opts.server,opts.cross);
+			opts.url=getAjaxUrl(httpType,opts.url,opts.server);
 		}
+		if(opts.global==true){
+			var ajaxStart=config.ajaxStart();
+			if(typeof ajaxStart=="boolean"&&ajaxStart==false){
+				config.ajaxStop();
+				return;
+			}
+		}
+		
+		
 		var xhr=new XMLHttpRequest();
 		var readyState=xhr.readyState;
 		var status=xhr.status;
 		if(readyState==0){//正在初始化....
-			//debugger;
 			var abort=true;
-			config.ajaxSend(xhr,opts);
-			if(typeof abort=="boolean"&&abort==false){
-				xhr.abort();
-				config.ajaxStop();
-				return;
+			if(opts.global==true){
+				config.ajaxSend(xhr,opts);
+				if(typeof abort=="boolean"&&abort==false){
+					xhr.abort();
+					config.ajaxStop();
+					return;
+				}
 			}
 			abort=opts.beforeSend(xhr);
 			if(typeof abort=="boolean"&&abort==false){
 				xhr.abort();
-				config.ajaxStop();
+				if(opts.global==true){
+					config.ajaxStop();
+				}
 				return;
 			}
 		}
@@ -217,15 +246,23 @@
 				if(status>=200&&status<300||status==304){
 					var data=opts.dataFilter(xhr.responseText,opts.dataType);
 						opts.success(data, xhr.statusText, xhr);
-						config.ajaxSuccess(xhr,opts);
+						if(opts.global==true){
+							config.ajaxSuccess(xhr,opts);
+						}
 				}else{
 					opts.error(xhr,xhr.statusText);
-					config.ajaxError(xhr,opts,xhr.statusText);
+					if(opts.global==true){
+						config.ajaxError(xhr,opts,xhr.statusText);
+					}
 				}
 				opts.complete(xhr,xhr.textStatus);
-				config.ajaxComplete(xhr,opts);
+				if(opts.global==true){
+					config.ajaxComplete(xhr,opts);
+				}
 			}
-			config.ajaxStop();
+			if(opts.global==true){
+				config.ajaxStop();
+			}
 		};
 		xhr.open(opts.type,opts.url,opts.async);
 		xhr.send(opts.data);
@@ -530,6 +567,37 @@
         }               
     }; 
 	window.bg=new Bridge();
+	
+	/**
+	 *载入config.js
+	 */
+	(function(){
+		var doms=document.getElementsByTagName("script");
+	       var len=doms.length;
+	       var configScript="";
+	       for(var i=0;i<len;i++){
+			 configScript=doms[i].getAttribute("bridgeConfig");
+			 if(configScript){
+			 	config.pageName=doms[i].getAttribute("bridgePageName");
+			 	bg.ajax({
+			 		url:configScript,
+			 		type:"get",
+			 		dataType:"script",
+			 		async:false,
+			 		global:false,
+			 		error:function(){
+			 			configScript="";
+			 		}
+			 	})
+			 	break;
+			 }
+	       }
+	       if(!configScript){
+				console.error("sorry,未找到bridge.js的配置文件.")	       	
+	       }
+	})();
+	
+	
 })();
 
 /*****************************************************************************
