@@ -1,12 +1,29 @@
 (function(){
 	var config={
+		root:"",//前端项目名称
+		view:"",//前端视图根目录
+		ajaxSetup:{//ajax的全局配置
+			
+		},
     	/*
     	 * 返回true,进入ajax程序,否则终止后面的ajax
     	 * */
-    	inAjax:function(){
-    		return true;
+    	ajaxStart:function(){//调用ajax时,在发起请求前执行,未形成xhr
+			return true;
     	},
-    	outAjax:function(){
+    	ajaxSend:function(xhr,opts){//ajax发送前,已形成xhr
+    		
+    	},
+	    ajaxSuccess:function(xhr,opts){//请求成功
+	    	
+	    },
+    	ajaxError:function(xhr,opts,statusText){//请求失败
+    		
+    	},
+   		ajaxComplete:function(xhr,opts){//请求完成,无论成功和失败
+   			
+   		},
+    	ajaxStop:function(){//调用ajax后,无论ajax请求的成功还是失败都调用无论xhr有没有形成
     		
     	},
     	servers:{}
@@ -30,6 +47,192 @@
        var hostName=window.location.protocol+"//"+window.location.host;
        config.servers["local"]={hostName:hostName,cross:false,root:config.root};
     };
+    
+    
+	/**
+     * 对于传递过来的server参数进行统一格式
+     * @param server 可能是字符串也可能是对象
+     */
+    function resolveParamServer(server){
+    	var type=typeof server;
+    	if(type=="object"){
+    		
+    	}else if(type=="string"&&server){
+    		server=config.servers[server];
+    	}else{
+    		server=config.servers["local"];
+    	}
+    	return server;
+    }
+    
+    
+    
+    /**
+     * 三种请求,
+     * 1.远程+跨域,==>bg.init.cross:true,ajaxOpt.cross:true
+     * 2.远程不跨域,==>bg.init.cross:false,ajaxOpt.cross:true
+     * 3.不跨域,不远程(本地)==>bg.init.cross不起作用,ajaxopt.cross:false或未定义
+     * 
+     */
+    function getAjaxHttpType(server,clientCross){
+    	//server=resolveParamServer(server);
+    	var serverCross=server.cross;
+        if(typeof clientCross=="undefined"||clientCross==false){//本地请求
+            return 3;
+        }
+        else if(clientCross==true){//设置了局部跨域参数
+            if(serverCross==true){//远程+跨域
+                return 1;
+            }else{//远程不跨域
+                return 2;
+            }
+        }
+    }
+    /**
+     * 根据不同的请求,生成不同的路径
+     * @param type 请求路径
+     * @param url  当前路径
+     */
+    function getAjaxUrl(type,url,server){
+    	//server=resolveParamServer(server);
+        var u="";
+        if(type===1){//远程+跨域
+            u=server.hostName+"/"+server.root+"/";
+        }else if(type===2){//远程不跨域
+        	if(server.root==""){//当项目名称root为空时的路径用主机名代替
+        		u=server.hostName+"/";
+        	}else{
+        		u="/"+server.root+"/";
+        	}
+        }else if(type===3){//不跨域,不远程(本地)
+            if(config.view){
+                u="/"+config.root+"/"+config.view+"/";
+            }else{
+                u="/"+config.root+"/";
+            }
+        }
+        return u+url;
+    }
+    /**
+     * 获取请求路径  测试请求的路劲
+     * @param  server {hostName:"http:127.0.0.1:8080",cross:true,root:"itemName"}
+     * @param  param {url:}	usr/getData
+     * @return http:127.0.0.1:8080/itemName/usr/getData
+     */
+    Bridge.prototype.getHttpUrl=function(server,url,cross){
+    	var type=getAjaxHttpType(server,cross);
+        return getAjaxUrl(type,url,server);
+    }
+    
+    /*
+     * ajax 用法和jquery类似
+     * 
+     * */
+    Bridge.prototype.ajax=function(opts){
+		var defaults={
+			url:"",
+			type:"get",
+			data:null,
+			async:true,
+			cross:false,
+			server:"",
+			global:true,
+			timeout:0,
+			dataType:"text",
+			contentType:"application/x-www-form-urlencoded",
+			beforeSend:function(xhr){},
+			dataFilter:function(data,type){
+				//var text=xhr.responseText;
+				if(type=="json"){
+					return JSON.parse(data);
+				}else if(type=="html"||type=="text"){
+					return data;
+				}else if(type=="script"){
+					eval(data);
+					return data;
+				}
+			},
+			success:function(data,textStatus,xhr){},
+			"error":function(xhr,textStatus){},
+			complete:function(xhr,textStatus){}
+		};
+		
+		//全局配置与请求参数的"合并"
+		for(var k in config.ajaxSetup){
+			if(typeof opts[k]=="undefined"){
+				opts[k]=config.ajaxSetup[k];
+			}
+		}
+		//合并请求参数和默认参数
+		for(var k in defaults){
+			if(typeof opts[k]!="undefined"){
+				//如果全局未false,设置的全局事件都不起作用了,用的都是默认配置,省去了后面每次使用全局事件都需要判断global
+				if(opts.global==false&&(k=="ajaxStart"||k=="ajaxSend"||k=="ajaxSuccess"||k=="ajaxError"||k=="ajaxComplete"||k=="ajaxStop")){
+					continue;
+				}
+				defaults[k]=opts[k];
+			}
+		}
+		opts=defaults;
+		opts.server=resolveParamServer(opts.server);
+		var httpType=getAjaxHttpType(opts.server,opts.cross);
+		opts.url=getAjaxUrl(httpType,opts.url,opts.server);
+		var ajaxStart=config.ajaxStart();
+		if(typeof ajaxStart=="boolean"&&ajaxStart==false){
+			config.ajaxStop();
+			return;
+		}
+		var xhr=new XMLHttpRequest();
+		var readyState=xhr.readyState;
+		var status=xhr.status;
+		if(readyState==0){//正在初始化....
+			//debugger;
+			var abort=true;
+			config.ajaxSend(xhr,opts);
+			if(typeof abort=="boolean"&&abort==false){
+				xhr.abort();
+				config.ajaxStop();
+				return;
+			}
+			abort=opts.beforeSend(xhr);
+			if(typeof abort=="boolean"&&abort==false){
+				xhr.abort();
+				config.ajaxStop();
+				return;
+			}
+		}
+		xhr.onreadystatechange=function(){
+			/*if(readyState==1){//正在初始化请求...
+				console.log("正在初始化请求...");
+			}else if(readyState==2){//正在发送请求...
+				console.log("正在发送请求...");
+			}else if(readyState==3){//正在接受数据...
+				console.log("正在接受数据...");
+			}else if(readyState==4){//完成请求...
+				console.log("完成请求...");
+			}*/
+			readyState=xhr.readyState;
+			status=xhr.status;
+			if(readyState==4){
+				if(status>=200&&status<300||status==304){
+					var data=opts.dataFilter(xhr.responseText,opts.dataType);
+						opts.success(data, xhr.statusText, xhr);
+						config.ajaxSuccess(xhr,opts);
+				}else{
+					opts.error(xhr,xhr.statusText);
+					config.ajaxError(xhr,opts,xhr.statusText);
+				}
+				opts.complete(xhr,xhr.textStatus);
+				config.ajaxComplete(xhr,opts);
+			}
+			config.ajaxStop();
+		};
+		xhr.open(opts.type,opts.url,opts.async);
+		xhr.send(opts.data);
+	};
+    
+    
+    
 	/**
      * 替换所有指定的字符
      * str 字符串
@@ -123,7 +326,7 @@
      * arr 数组
      * element 指定元素
      */
-  Bridge.prototype.inArray=function(arr,element){
+	Bridge.prototype.inArray=function(arr,element){
       try{
           if(!(arr instanceof Array)){
               throw new Error("请传入数组");
@@ -139,7 +342,7 @@
           alert("inArray:>>"+e.message);
           console.error("inArray:>>"+e.message);
       }
-  }
+	}
   
   /**
 	 * 最终返回一个数组,是两个数组的相同部分
@@ -216,7 +419,7 @@
 */
     Bridge.prototype.url=function(name,h){
         if(!name){
-            console.error("urlResolve缺乏name参数");
+            console.error("url缺乏name参数");
             return "";
         }        
         var href=h?h:window.location.href;
@@ -326,306 +529,7 @@
             return "";
         }               
     }; 
-	
-	/**
-     * 对于传递过来的server参数进行统一格式
-     * @param server 可能是字符串也可能是对象
-     */
-    function resolveParamServer(server){
-    	var type=typeof server;
-    	if(type=="object"){
-    		
-    	}else if(type=="string"&&server){
-    		server=config.servers[server];
-    	}else{
-    		server=config.servers["local"];
-    	}
-    	return server;
-    }
-    
-    
-    
-    /**
-     * 三种请求,
-     * 1.远程+跨域,==>bg.init.cross:true,ajaxOpt.cross:true
-     * 2.远程不跨域,==>bg.init.cross:false,ajaxOpt.cross:true
-     * 3.不跨域,不远程(本地)==>bg.init.cross不起作用,ajaxopt.cross:false或未定义
-     * 
-     */
-    function getAjaxHttpType(server,clientCross){
-    	//server=resolveParamServer(server);
-    	var serverCross=server.cross;
-        if(typeof clientCross=="undefined"||clientCross==false){//本地请求
-            return 3;
-        }
-        else if(clientCross==true){//设置了局部跨域参数
-            if(serverCross==true){//远程+跨域
-                return 1;
-            }else{//远程不跨域
-                return 2;
-            }
-        }
-    }
-    /**
-     * 根据不同的请求,生成不同的路径
-     * @param type 请求路径
-     * @param url  当前路径
-     */
-    function getAjaxUrl(type,url,server){
-    	//server=resolveParamServer(server);
-        var u="";
-        if(type===1){//远程+跨域
-            u=server.hostName+"/"+server.root+"/";
-        }else if(type===2){//远程不跨域
-        	if(server.root==""){//当项目名称root为空时的路径用主机名代替
-        		u=server.hostName+"/";
-        	}else{
-        		u="/"+server.root+"/";
-        	}
-        }else if(type===3){//不跨域,不远程(本地)
-            if(config.view){
-                u="/"+config.root+"/"+config.view+"/";
-            }else{
-                u="/"+config.root+"/";
-            }
-        }
-        return u+url;
-    }
-    /**
-     * 获取请求路径  测试请求的路劲
-     * @param  server {hostName:"http:127.0.0.1:8080",cross:true,root:"itemName"}
-     * @param  param {url:}	usr/getData
-     * @return http:127.0.0.1:8080/itemName/usr/getData
-     */
-    Bridge.prototype.getHttpUrl=function(server,url,cross){
-    	var type=getAjaxHttpType(server,cross);
-        return getAjaxUrl(type,url,server);
-    }
-    /*
-     * ajax 用法和jquery类似
-     * 
-     * */
-    Bridge.prototype.ajax=function(opts){
-		var defaults={
-			url:"",
-			type:"get",
-			data:null,
-			async:true,
-			cross:false,
-			server:"",
-			timeout:0,
-			dataType:"text",
-			contentType:"application/x-www-form-urlencoded",
-			beforeSend:function(xhr){},
-			dataFilter:function(data,type){
-				//var text=xhr.responseText;
-				if(type=="json"){
-					return JSON.parse(data);
-				}else if(type=="html"||type=="text"){
-					return data;
-				}else if(type=="script"){
-					eval(data);
-					return data;
-				}
-			},
-			success:function(data,textStatus,xhr){},
-			"error":function(xhr,textStatus){},
-			complete:function(xhr,textStatus){}
-		};
-		for(var k in defaults){
-			if(typeof opts[k]!="undefined"){
-				defaults[k]=opts[k];
-			}
-		}
-		opts=defaults;
-		opts.server=resolveParamServer(opts.server);
-		var httpType=getAjaxHttpType(opts.server,opts.cross);
-		opts.url=getAjaxUrl(httpType,opts.url,opts.server);
-
-		var xhr=new XMLHttpRequest();
-		var readyState=xhr.readyState;
-		var status=xhr.status;
-		if(readyState==0){//正在初始化....
-			var abort=opts.beforeSend(xhr);
-			if(typeof abort=="boolean"&&!abort){
-				xhr.abort();
-			}
-		}
-		xhr.onreadystatechange=function(){
-			/*if(readyState==1){//正在初始化请求...
-				console.log("正在初始化请求...");
-			}else if(readyState==2){//正在发送请求...
-				console.log("正在发送请求...");
-			}else if(readyState==3){//正在接受数据...
-				console.log("正在接受数据...");
-			}else if(readyState==4){//完成请求...
-				console.log("完成请求...");
-			}*/
-			readyState=xhr.readyState;
-			status=xhr.status;
-			if(readyState==4){
-				if(status>=200&&status<300||status==304){
-					var data=opts.dataFilter(xhr.responseText,opts.dataType);
-						opts.success(data, xhr.statusText, xhr);	
-				}else{
-					opts.error(xhr,xhr.statusText);
-				}
-				opts.complete(xhr,xhr.textStatus);
-			}
-		};
-		xhr.open(opts.type,opts.url,opts.async);
-		xhr.send(opts.data);
-	};
-	
-	
-	
 	window.bg=new Bridge();
-	return;
-	  
-    /*************************
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-	* 以下内容准备作废
-* */
-	
-	
-	/*
-	 *从jquery基础上封装
-	 * */
-	(function($,bg){
-		if($==null){
-	        throw new Error("bridge出错了:没有找到jQuery或Zepto库.");
-	    }
-    /**
-     * 若要发送远程跨域请求,
-     * 需要添加参数data.cross=true;
-     * 否则被视为本地请求
-     * obj 请求对象
-     * url    请求路径
-     * data    请求参数
-     * callback 回调函数 可不填
-     * jquery的load中params参数如果有值则表示发送post请求,否则是get请求
-     */
-    bg.load=function(obj,url,params,callback){
-    	if(!this.getConfig().inAjax()){
-    		return;
-    	}
-        if(!(obj instanceof $)){//如果obj不是jquery对象
-            throw new Error("load的第一个参数obj不是jQuery对象.");
-        }
-        var type,httpType,url;
-        type=typeof params;
-        if (type==="function") {//get请求
-            callback = params;
-            params = "undefined";
-        }
-        else if(type==="object"){//post请求
-            params.cross=true;
-            httpType=getAjaxHttpType(params.server,true);
-            url=getAjaxUrl(httpType,url,params.server);
-        }else if(type==="undefined"){//alert(1)
-            url=getAjaxUrl(3,url,"");
-        }
-         obj.load(url,params,callback);
-    };
-    /**
-     * post请求只能请求远程数据,
-     * 本地请求会报500错误.
-     */
-    bg.post=function(url,params,callback,type){
-    	if(!this.getConfig().inAjax()){
-    		return;
-    	}
-        var t=typeof params;
-        var httpType;
-        if (t==="function") {
-            type = type || callback;
-            callback = params;
-            params = {};
-        }
-        params.cross=true;
-        url=getAjaxUrl(getAjaxHttpType(params.server,true),url,params.server);
-        $.post(url,params,callback,type);
-    }
-    /*
-     * 若要发送远程跨域请求,
-     * 需要添加参数data.cross=true;
-     * 否则被视为本地请求
-     */
-    bg.get=function(url,data,callback,type){
-    	if(!this.getConfig().inAjax()){
-    		return;
-    	}
-        var httpType,url;
-        var t=typeof data;
-        var server="";
-        if (t==="function") {
-            type = type || callback;
-            callback = data;
-            data = "undefined";
-            t=typeof data;
-        }        
-        if(t==="object"){
-            httpType=getAjaxHttpType(data.server,data.cross);
-            server=data.server;
-        }else if(t==="undefined"){
-            httpType=3;
-        }else {
-            throw new Error("get请求的参数判断异常");
-        }
-        url=getAjaxUrl(httpType,url,server);
-        $.get(url,data,callback,type);
-    }
-    /*
-     * 若要发送远程跨域请求,
-     * 需要添加参数data.cross=true;
-     * 否则被视为本地请求
-     */
-    bg.getJSON=function(url, data, callback){
-    	if(!this.getConfig().inAjax()){
-    		return;
-    	}
-        objBridge.get(url,data,callback,"json");
-    }
-    /*
-     * 因为无法添加参数,所以只能发送本地请求
-     */
-    bg.getScript=function(url,callback){
-    	if(!this.getConfig().inAjax()){
-    		return;
-    	}
-        objBridge.get(url,"undefined",callback,"script");
-    }
-    /**
-     * 1.跨域请求一定要添加参数cross:true,
-     * 2.本地请求可不写cross或cross:false
-     * opt,正常的$.ajax()参数但是跨域的话多一个cross:true
-     */
-    bg.ajax=function(opt){
-    	if(!this.getConfig().inAjax()){
-    		return;
-    	}
-        var success;
-        if(typeof opt==="string"){//将参数转换成对象型参数
-            opt={
-                type:"get",
-                url:opt
-            }
-        }
-        opt.url=getAjaxUrl(getAjaxHttpType(opt.server,opt.cross),opt.url,opt.server);
-        $.ajax(opt);
-    };
-		
-		
-	})(jQuery,bg);
 })();
 
 /*****************************************************************************

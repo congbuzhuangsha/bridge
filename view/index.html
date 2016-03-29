@@ -21,10 +21,24 @@
 					}
 				});
 			}
+			
+			function getScript(){
+				bg.ajax({
+					url:"js/jquery-2.1.4.min.js",
+					dataType:"script",
+					async:false
+				});
+				bg.ajax({
+					url:"1.js",
+					dataType:"script",
+					async:false
+				});
+			}
 		</script>
 	</head>
 	<body>
 		<button onclick="app()">测试</button>
+		<button onclick="getScript()">获取script</button>
 		<div id="content"></div>
 	</body>
 </html>
