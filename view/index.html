@@ -3,10 +3,24 @@
 	<head>
 		<meta charset="utf-8" />
 		<title></title>
-		<script type="text/javascript" src="js/jquery-1.11.1.min.js" ></script>
-		<script type="text/javascript" src="js/bridge.js" ></script>
+		<script type="text/javascript" src="js/bridge3.5.js"></script>
+		<script type="text/javascript" src="js/config.js"></script>
 		<script type="text/javascript">
-		
+			function app(){
+				bg.ajax({
+					url:"servlet/CrossServlet",
+					type:"get",
+					dataType:"json",
+					cross:true,
+					server:"s1",
+					success:function(data){
+						console.log(data);
+					},
+					error:function(){
+						alert("请求失败了!");
+					}
+				});
+			}
 		</script>
 	</head>
 	<body>

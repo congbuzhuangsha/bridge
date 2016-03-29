@@ -10,8 +10,5 @@ bg.init({
     },
     endAjax:function(){//退出ajax
     	
-    },
-    script:{
-    	"tmlist":["2.js","3.js","4.js"]
     }
 });
