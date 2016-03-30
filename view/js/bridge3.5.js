@@ -584,9 +584,9 @@
 			 	break;
 			 }
 	       }
-	       if(!configScript){
+	       /*if(!configScript){
 				console.error("sorry,未找到bridge.js的配置文件.")	       	
-	       }
+	       }*/
 	})();
 	
 	
