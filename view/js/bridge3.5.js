@@ -595,17 +595,49 @@
 /*****************************************************************************
  * 调用
  * <button onclick="app()">测试hb</button>
+ * 
+ * <script bridgePageName="pageA" bridgeConfig="js/config.js" src="js/bridge3.5.js" type="text/javascript"></script>
  ******************************************************************************
  */
 
-/*bg.init({
-				root:"bridge",//前端项目名称
-				view:"",//前端视图根目录
-			    servers:{
-			    	"s1":{hostName:"http://192.168.6.130:8080",root:"bridge",cross:true},
-			    	"s2":{hostName:"http://192.168.6.130:8080",root:"bridge2",cross:true}
-			    }
-			});
+/*
+bg.init({
+	root:"bridge",//前端项目名称
+	view:"view",//前端视图根目录
+	script:{
+		"pageA":["js/jquery-2.1.4.min.js","test/1.js"],
+		"pageB":["js/jquery-2.1.4.min.js","test/2.js"]
+	},
+	ajaxSetup:{//ajax的全局配置
+		
+	},
+	ajaxStart:function(){//调用ajax时,在发起请求前执行,未形成xhr
+		alert(1);
+		return false;
+	},
+	ajaxSend:function(xhr,opts){//ajax发送前,已形成xhr
+		
+	},
+    ajaxSuccess:function(xhr,opts){//请求成功,
+    	
+    },
+	ajaxError:function(xhr,opts,statusText){//请求失败
+		
+	},
+	ajaxComplete:function(xhr,opts){//请求完成,无论成功和失败
+		
+	},
+	ajaxStop:function(){//调用ajax后,无论ajax请求的成功还是失败都调用无论xhr有没有形成
+		
+	},
+	servers:{
+    	"s1":{hostName:"http://192.168.6.130:8080",root:"bridge",cross:true},
+    	"s2":{hostName:"http://192.168.6.130:8080",root:"bridge2",cross:true}
+    }
+});
+
+
+
 			
 			function app(){
 				//打印配置信息
