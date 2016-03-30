@@ -72,8 +72,6 @@
     	}else if(type=="string"&&server){
     		server=config.servers[server];
     	}else{
-    		/*var hostName=window.location.protocol+"//"+window.location.host;
-    		config.servers["local"]={hostName:hostName,cross:false,root:config.root};*/
     		server=config.servers["local"]?config.servers["local"]:false;
     	}
     	return server;
@@ -153,7 +151,7 @@
 			global:true,
 			timeout:0,
 			dataType:"text",
-			contentType:"application/x-www-form-urlencoded",
+			contentType:"application/x-www-form-urlencoded;charset=UTF-8",
 			beforeSend:function(xhr){},
 			dataFilter:function(data,type){
 				//var text=xhr.responseText;
@@ -162,13 +160,7 @@
 				}else if(type=="html"||type=="text"){
 					return data;
 				}else if(type=="script"){
-					//eval(data);
-					var scriptDom=document.createElement("script");
-					scriptDom.type="text/javascript";
-					//scriptDom.innerHTML=data;
-					scriptDom.src=opts.url;
-					scriptDom.async=false;
-					document.getElementsByTagName("head")[0].appendChild(scriptDom);
+					eval(data);
 					return data;
 				}
 			},

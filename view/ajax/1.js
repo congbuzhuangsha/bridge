@@ -1,4 +1,5 @@
-console.log("我来自1.js");
+debugger;
+$("body").css("background-color","red");
 $("#btn").click(function(){
 	alert("哈哈");
 });

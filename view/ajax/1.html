@@ -3,16 +3,23 @@
 	<head>
 		<meta charset="UTF-8">
 		<title></title>
-		<script name="myhtml" type="text/javascript" src="../js/jquery-2.1.4.min.js"  config="app" ></script>
+		<script type="text/javascript" src="../js/jquery-2.1.4.js"></script>
 	</head>
 	<body>
 		<button id="tt">发送请求</button>
 		<button id="btn">测试按钮</button>
 	</body>
 	<script type="text/javascript">
-		var dom=document.createElement("script");
-		dom.type="text/javascript";
-		dom.innerHTML="alert(0);";
-		document.getElementsByTagName("head")[0].appendChild(dom);
+	$("#tt").click(function(){
+		$.ajax({
+			type:"get",
+			url:"1.js",
+			dataType:"script",
+			async:true
+		});
+	});
+	
+	
+		
 	</script>
 </html>
