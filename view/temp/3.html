@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script type="text/javascript">
+		function tmp(html,data){
+			var placeHolderExp=/<%([^%>]+)?%>/g;//占位符正则
+			var placeHolderExpRes=[];//占位符匹配结果
+			var jsExp=/(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g;//js条件正则表达式
+			var makeCode="var tmpArray=[];\n";//制作展示内容的js代码,暂时以字符串形式
+			var cursor=0;//光标,处理字符串的位置
+			var makeCodeMethod=function(str,isJs){//拼接makeCode方法
+				if(isJs){//是js代码
+					makeCode+=(str.match(jsExp)?str+"\n":"tmpArray.push("+str+");\n");
+				}else{//不是js带
+					makeCode+=(str==""?str:"tmpArray.push('"+str.replace(/"/g,"\"")+"');\n");
+				}
+				return arguments.callee;
+			}
+			while(placeHolderExpRes=placeHolderExp.exec(html)){
+				makeCodeMethod(html.slice(cursor,placeHolderExpRes.index))(placeHolderExpRes[1],true);
+				cursor=placeHolderExpRes.index+placeHolderExpRes[0].length;
+			}
+			//所有的占位符都被匹配结束,现在把剩余的字符串拼接到最后
+			makeCodeMethod(html.substr(cursor),html.length-cursor);
+			makeCode+="return tmpArray.join('')";
+			makeCode=makeCode.replace(/[\r\t\n]/g, '');
+			return new Function(makeCode).apply(data);
+		}
+		var template = 
+			'My skills:' + 
+			'<%if(this.showSkills) {%>' +
+			    '<%for(var index in this.skills) {%>' + 
+			    '<a href="#"><%this.skills[index]%></a>' +
+			    '<%}%>' +
+			'<%} else {%>' +
+			    '<p>none</p>' +
+			'<%}%>';
+		var res=tmp(template, {skills: ["js", "html", "css"],showSkills: true});
+		console.log(res);
+/*	var TemplateEngine = function(html, options) {
+    var re = /<%([^%>]+)?%>/g, reExp = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g, code = 'var r=[];\n', cursor = 0, match;
+    var add = function(line, js) {
+        js? (code += line.match(reExp) ? line + '\n' : 'r.push(' + line + ');\n') :
+            (code += line != '' ? 'r.push("' + line.replace(/"/g, '\\"') + '");\n' : '');
+        return add;
+    }
+    while(match = re.exec(html)) {
+        add(html.slice(cursor, match.index))(match[1], true);
+        cursor = match.index + match[0].length;
+    }
+    add(html.substr(cursor, html.length - cursor));
+    code += 'return r.join("");';
+    return new Function(code.replace(/[\r\t\n]/g, '')).apply(options);
+}
+	
+		var template = 
+'My skills:' + 
+'<%if(this.showSkills) {%>' +
+    '<%for(var index in this.skills) {%>' + 
+    '<a href="#"><%this.skills[index]%></a>' +
+    '<%}%>' +
+'<%} else {%>' +
+    '<p>none</p>' +
+'<%}%>';
+console.log(TemplateEngine(template, {
+    skills: ["js", "html", "css"],
+    showSkills: true
+}));*/
+	</script>
+</html>

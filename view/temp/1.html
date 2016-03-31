@@ -3,58 +3,36 @@
 	<head>
 		<meta charset="UTF-8">
 		<title></title>
-		<script id="tmp1" type="text/template">
-			<p>
-				alert(12);
-			</p> 
-			
-			#{name}#{name}#{name}#{name}#{name}#{name}#{name}
-		</script>
 	</head>
 	<body>
-		<h1 id="t1">
-			
-		</h1>
-		<div id="tmp2">
-			<div name="#{name}">
-				<p>
-					#{age}
-				</p>
-			</div> 
-		</div>
+		
 	</body>
 	<script type="text/javascript" src="../js/jquery-2.1.4.js" ></script>
 	<script type="text/javascript" src="../js/bridge3.5.js"></script>
 	<script>
-		(function($){
-			function findPlaceHolder(str){
-				var startIndex=str.indexOf("#{");
-				var endIndex=str.indexOf("}");
-				if(startIndex>=0&&endIndex>=0&&endIndex>startIndex){
-					return str.substring(startIndex+2,endIndex);
-				}
+		/*var people={
+			name:"guoyansi",
+			run:function(){
+				console.log("run:"+this.name);
 			}
-			
-			
-			$.fn.tmpl=function(opts){
-				var tmpStr=$("#"+opts.tmp).html();
-				var placeHolder=findPlaceHolder(tmpStr);
-				tmpStr=bg.replaceAll(tmpStr,"#{"+placeHolder+"}",opts.data[placeHolder]);
-				$(this).html(tmpStr);
+		}
+		var data={name:"思思博士"};
+		people.run.call(data);
+		*/
+		/*function people(){
+			this.name="guoyansi";
+			this.run=function(){
+				console.log("run:"+this.name);
 			}
-		})(jQuery);
-	$("#t1").tmpl({tmp:"tmp1",data:{name:"思思博士"}});
-	
-	
-	//findPlaceHolder("sdffaad#{io}dsfafasd");
-	
-	
-	
-	
-		
-		
-		
-		
+		}
+		function father(){
+			this.name="爸爸";
+		}
+		people*/
+		/*var fn=new Function("arg","console.log(arg+1)");
+		console.log(fn(2));
+		fn=new Function("console.log(this.name)");
+		fn.apply({name:"思思博士"});*/
 		
 		
 	</script>
