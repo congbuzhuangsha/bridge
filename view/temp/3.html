@@ -7,8 +7,11 @@
 	<body>
 	</body>
 	<script type="text/javascript">
-		function tmp(html,data){
-			var placeHolderExp=/<%([^%>]+)?%>/g;//占位符正则
+		function tmp(html,data,startPlaceHolder,endPlaceHolder){
+			startPlaceHolder="<%";
+			endPlaceHolder="%>";
+			var placeHolderExp= new RegExp(startPlaceHolder+"([^"+endPlaceHolder+"]+)?"+endPlaceHolder,"g");//占位符正则
+			//var placeHolderExp=/<%([^%>]+)?%>/g;
 			var placeHolderExpRes=[];//占位符匹配结果
 			var jsExp=/(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g;//js条件正则表达式
 			var makeCode="var tmpArray=[];\n";//制作展示内容的js代码,暂时以字符串形式
@@ -16,7 +19,7 @@
 			var makeCodeMethod=function(str,isJs){//拼接makeCode方法
 				if(isJs){//是js代码
 					makeCode+=(str.match(jsExp)?str+"\n":"tmpArray.push("+str+");\n");
-				}else{//不是js带
+				}else{//不是js代码
 					makeCode+=(str==""?str:"tmpArray.push('"+str.replace(/"/g,"\"")+"');\n");
 				}
 				return arguments.callee;
@@ -28,6 +31,7 @@
 			//所有的占位符都被匹配结束,现在把剩余的字符串拼接到最后
 			makeCodeMethod(html.substr(cursor),html.length-cursor);
 			makeCode+="return tmpArray.join('')";
+			console.log(makeCode);
 			makeCode=makeCode.replace(/[\r\t\n]/g, '');
 			return new Function(makeCode).apply(data);
 		}

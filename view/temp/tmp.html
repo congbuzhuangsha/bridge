@@ -1,0 +1,13 @@
+<p>我的姓名是:<%this.name%></p>
+<p>我的年龄是:<%this.people.age%></p>
+<ul>
+	<%  
+		var len=this.people.happy.length;
+		for(var i=0;i<len;i++){
+	%>
+		<li>
+			<%  
+			this.people.happy[i]  
+			%></li>
+	<%}%>
+</ul>

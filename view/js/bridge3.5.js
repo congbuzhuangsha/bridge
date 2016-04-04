@@ -1,8 +1,16 @@
 (function(){
+	/**
+	 *配置文件的连接放置在bridge.js的bridgeConfig后面.路径和script中的写法一样 
+	 */
 	var config={
 		root:"",//前端项目名称
 		view:"",//前端视图根目录
-		script:{},//script配置
+		startPlaceHolder:"<%",//占位符的开始标识
+		endPlaceHolder:"%>",//占位符的结束标识
+		script:{
+			//"pageA":["js/jquery-2.1.4.min.js","test/1.js"],bridge.js 上bridgePageName="pageA"
+			//"pageB":["js/jquery-2.1.4.min.js","test/2.js"] bridge.js 上bridgePageName="pageB"
+		},//script配置
 		ajaxSetup:{},//ajax的全局配置
     	/*
     	 * 返回true,进入ajax程序,否则终止后面的ajax
@@ -25,7 +33,10 @@
     	ajaxStop:function(){//调用ajax后,无论ajax请求的成功还是失败都调用无论xhr有没有形成
     		
     	},
-    	servers:{}
+    	servers:{
+    		//"s1":{hostName:"http://192.168.6.130:8080",root:"bridge",cross:true},
+    		//"s2":{hostName:"http://192.168.6.130:8080",root:"bridge2",cross:true}
+    	}
     }
 	
 	function Bridge(){
@@ -557,7 +568,100 @@
             console.error("urlResolve未匹配到你要获取的参数");
             return "";
         }               
-    }; 
+    };
+    /*
+     * 模板引擎
+     * */
+    function tmpEngine(str,data,startPlaceHolder,endPlaceHolder){
+			//startPlaceHolder="<%";
+			//endPlaceHolder="%>";
+			var placeHolderExp= new RegExp(startPlaceHolder+"([^"+endPlaceHolder+"]+)?"+endPlaceHolder,"g");//占位符正则
+			//var placeHolderExp=/<%([^%>]+)?%>/g;
+			var placeHolderExpRes=[];//占位符匹配结果
+			var jsExp=/(^( )?(if|var|for|else|switch|case|break|{|}))(.*)?/g;//js语句的正则表达式
+			var makeCode="var tmpArray=[];\n";//制作展示内容的js代码,暂时以字符串形式
+			var cursor=0;//光标,处理字符串的位置
+			var makeCodeMethod=function(str,isJs){//拼接makeCode方法
+				str=str.replace(/^\s+|\s+$/g,"");//去除占位符内部两端的空格
+				str=str.replace(/[\r\t\n]/g, '');//去除内部的换行,空格,制表符
+				if(isJs){//是js代码
+					makeCode+=(str.match(jsExp)?str+"\n":"tmpArray.push("+str+");\n");
+				}else{//不是js代码
+					makeCode+=(str==""?str:"tmpArray.push('"+str.replace(/"/g,"\"")+"');\n");
+				}
+				return arguments.callee;
+			}
+			while(placeHolderExpRes=placeHolderExp.exec(str)){
+				makeCodeMethod(str.slice(cursor,placeHolderExpRes.index))(placeHolderExpRes[1],true);
+				cursor=placeHolderExpRes.index+placeHolderExpRes[0].length;
+			}
+			//所有的占位符都被匹配结束,现在把剩余的字符串拼接到最后
+			//alert(str);
+			makeCodeMethod(str.substr(cursor,str.length-cursor));
+			makeCode+="return tmpArray.join('');";
+			console.log(makeCode);
+			//makeCode=makeCode.replace(/[\r\t\n]/g, '');
+			return new Function(makeCode).apply(data);
+		}
+    
+    /*
+     * var data= {skills: ["js", "html", "css"],showSkills: true};
+     第一种用法:
+  	   tmpParam:没有经过处理的字符串
+  	   data:填充到模板中的数据
+     	返回将要显示的(html)字符串
+     var res=tmp(template,data);
+		console.log(res);
+	第二种用法:
+		tmpParam jquery对象
+		将返回的数据直接插入到当前jquery对象里.
+		bg.tmp(jquery对象);
+     * 
+     * */
+    
+    Bridge.prototype.tmp=function(tmpParam,data){
+    	var startPlaceHolder=config.startPlaceHolder;//开始标识
+    	var endPlaceHolder=config.endPlaceHolder;//结束标识
+    	var obj=this;
+    	var tmpUrl="";
+    	var dataUrl="";
+    	var tmp="";
+    	var ajaxData={};
+    	if(tmpParam instanceof  jQuery&&typeof data==="undefined"){//如果是jquery对象
+    		tmpUrl=tmpParam.attr("bg-tmpl");
+    		dataUrl=tmpParam.attr("bg-ajax");
+    		obj.ajax({
+    			url:tmpUrl,
+    			async:false,
+    			global:false,
+    			dataType:"text",
+    			success:function(tempstr){
+    				tmp=tempstr;
+    			},
+    			error:function(){
+    				console.log("获取模板"+tmpUrl+"失败了!");
+    			}
+    		});
+    		obj.ajax({
+    			url:dataUrl,
+    			async:false,
+    			global:false,
+    			dataType:"json",
+    			success:function(res){
+    				ajaxData=res;
+    			},
+    			error:function(){
+    				console.log("获取模板数据失败了!");
+    			}
+    		});
+    		tmpParam.html(tmpEngine(tmp,ajaxData,startPlaceHolder,endPlaceHolder));
+    	}else if(typeof tmpParam=="string"){//是字符串
+    		return tmpEngine(tmpParam,data,startPlaceHolder,endPlaceHolder);
+    	}else{
+    		console.error("获取模板信息失败了...")
+    	}
+    };
+  
 	window.bg=new Bridge();
 	
 	/**

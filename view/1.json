@@ -1,5 +1,12 @@
 {
-	"name":"guoyansi",
-	"age":27,
-	"sessionStatus":1
+	"name": "思思博士",
+	"people": {
+		"age": 26,
+		"happy": [
+			"ready",
+			"run",
+			"song",
+			"hhhhhhhhhhhhhhhhhh"
+		]
+	}
 }
