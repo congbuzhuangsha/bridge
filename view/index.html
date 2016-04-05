@@ -51,13 +51,15 @@
 		</script>
 	</head>
 	<body>
-		<div id="showTmp" bg-tmpl="temp/tmp.html" bg-ajax="1.json"></div>
+		<!--<div id="showTmp" bg-tmpl="temp/tmp.html" bg-ajax="1.json"></div>-->
+		<div id="showTmp"></div>
+		<button id="btn1">单击</button>
 	</body>
 	<script bridgePageName="pageA" bridgeConfig="js/config.js" src="js/bridge3.5.js" type="text/javascript"></script>
 	<script type="text/javascript">
 		//var data={name:"思思博士",people:{age:26,happy:["ready","run","song","hhhhhhhhhhhhhhhhhh"]}};
 		//alert($("#hiddenTmp").html());
-		bg.tmp($("#showTmp"));
+		/*bg.tmp($("#showTmp"));*/
 		//$("#showTmp").html($("#hiddenTmp").html());
 		/*bg.ajax({
 			url:"temp/tmp.html",
@@ -70,6 +72,15 @@
 				alert("异常");
 			}
 		});*/
-		
+		bg.ajaxTmp("temp/tmp.html",function(tmp){
+			bg.ajax({
+				url:"1.json",
+				type:"get",
+				dataType:"json",
+				success:function(data){
+					$("#showTmp").html(bg.tmp(tmp,data));
+				}
+			});
+		});
 	</script>
 </html>

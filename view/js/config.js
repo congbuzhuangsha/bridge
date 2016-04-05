@@ -3,9 +3,16 @@ bg.init({
 	view:"view",//前端视图根目录
 	startPlaceHolder:"<%",//占位符的开始标识
 	endPlaceHolder:"%>",//占位符的结束标识
-	script:{
+	/*script:{
 		"pageA":["js/jquery-2.1.4.min.js"],
 		"pageB":["js/jquery-2.1.4.min.js","test/2.js"]
+	},*/
+	script:function(){//写法二
+		 	var scriptJquery="js/jquery-2.1.4.min.js";
+			return{
+				"pageA":[scriptJquery,"test/1.js"],//bridge.js 上bridgePageName="pageA"
+				"pageB":[scriptJquery,"test/2.js"] //bridge.js 上bridgePageName="pageB"
+			};
 	},
 	ajaxSetup:{//ajax的全局配置
 		

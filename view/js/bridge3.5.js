@@ -7,10 +7,17 @@
 		view:"",//前端视图根目录
 		startPlaceHolder:"<%",//占位符的开始标识
 		endPlaceHolder:"%>",//占位符的结束标识
-		script:{
+		script:{//写法一
 			//"pageA":["js/jquery-2.1.4.min.js","test/1.js"],bridge.js 上bridgePageName="pageA"
 			//"pageB":["js/jquery-2.1.4.min.js","test/2.js"] bridge.js 上bridgePageName="pageB"
 		},//script配置
+		/*script:function(){//写法二
+		 	var scriptJquery="js/jquery-2.1.4.min.js";
+			return{
+				//"pageA":[scriptJquery,"test/1.js"],bridge.js 上bridgePageName="pageA"
+				//"pageB":[scriptJquery,"test/2.js"] bridge.js 上bridgePageName="pageB"
+			};
+		}*/
 		ajaxSetup:{},//ajax的全局配置
     	/*
     	 * 返回true,进入ajax程序,否则终止后面的ajax
@@ -56,6 +63,9 @@
        }
        var hostName=window.location.protocol+"//"+window.location.host;
        config.servers["local"]={hostName:hostName,cross:false,root:config.root};
+       if(typeof config.script==="function"){
+       		config.script=config.script();
+       }
        var scriptArray=config.script[config.pageName];
        if(scriptArray instanceof Array){
        		var len=scriptArray.length;
@@ -599,7 +609,7 @@
 			//alert(str);
 			makeCodeMethod(str.substr(cursor,str.length-cursor));
 			makeCode+="return tmpArray.join('');";
-			console.log(makeCode);
+			//console.log(makeCode);
 			//makeCode=makeCode.replace(/[\r\t\n]/g, '');
 			return new Function(makeCode).apply(data);
 		}
@@ -658,10 +668,41 @@
     	}else if(typeof tmpParam=="string"){//是字符串
     		return tmpEngine(tmpParam,data,startPlaceHolder,endPlaceHolder);
     	}else{
-    		console.error("获取模板信息失败了...")
+    		console.error("获取模板信息失败了...");
     	}
     };
-  
+    /**
+     * 
+	 *
+ 	 *@param  tmpUrl 获取模板的地址
+     * @param  callback 获取模板地址后的回调函数,参数是模板html
+     * 
+     * bg.ajaxTmp("temp/tmp.html",function(tmp){
+			bg.ajax({
+				url:"1.json",
+				type:"get",
+				dataType:"json",
+				success:function(data){
+					$("#showTmp").html(bg.tmp(tmp,data));
+				}
+			});
+		});
+     */
+	  Bridge.prototype.ajaxTmp=function(tmpUrl,callback){
+	  	var obj=this;
+	  	var tmpHtml="";
+	  	obj.ajax({
+	  		url:tmpUrl,
+	  		dataType:"text",
+	  		type:"get",
+	  		async:false,
+	    	global:false,
+	  		success:function(html){
+	  			tmpHtml=html;
+	  		}
+	  	});
+	  	callback(tmpHtml);
+	  };
 	window.bg=new Bridge();
 	
 	/**
